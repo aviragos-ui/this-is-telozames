@@ -7,6 +7,12 @@
  const quoted=s=>{const text=String(s).trim();const period=text.endsWith('.');return '«'+esc((period?text.slice(0,-1):text).replace(/«/g,'„').replace(/»/g,'“'))+'»'+(period?'.':'');};
  const url=s=>String(s).split('/').map(encodeURIComponent).join('/');
  const starMarkup='<img class="brand-emblem" src="brand-symbol.svg" alt="">';
+ // Touch scrolling must not leave a focus frame around entire carousels.
+ const root=document.documentElement;
+ document.addEventListener('keydown',e=>{if(['Tab','ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(e.key))root.classList.add('keyboard-navigation');},true);
+ const touchFocus=()=>root.classList.remove('keyboard-navigation');
+ document.addEventListener('pointerdown',touchFocus,true);
+ document.addEventListener('touchstart',touchFocus,{capture:true,passive:true});
  const reduced=matchMedia('(prefers-reduced-motion: reduce)');
  const archive=new Map(D.archive.map(a=>[a.id,a]));
  const viewer=$('#viewer'),body=$('#viewer-body');let previousFocus=null;
@@ -25,14 +31,14 @@
   previousFocus=document.activeElement;pauseAll();viewer.classList.remove('viewer-circle');body.replaceChildren();$('#viewer-title').textContent=title||('Из записки'+(q.author?' · '+q.author:''));$('#viewer-error').textContent='';
   const note=document.createElement('div');note.className='note-text';note.textContent=q.text||q.excerpt;body.append(note);viewer.showModal();document.body.style.overflow='hidden';
  }
- const pauseAll=()=>$$('video').forEach(v=>v.pause());
+ const pauseAll=()=>$$('video').forEach(v=>{v.pause();if(v.hasAttribute('data-preview')&&v.hasAttribute('src')){v.removeAttribute('src');v.load();}});
  function open(item,title,type){
   previousFocus=document.activeElement;pauseAll();body.replaceChildren();$('#viewer-title').textContent=title;$('#viewer-error').textContent='';
   const isCircle=item.type==='video_circle';viewer.classList.toggle('viewer-circle',isCircle);
   const isVideo=type==='video'||item.type==='video'||isCircle;
   const node=document.createElement(isVideo?'video':'img');
   node.src=url(isVideo?(item.web_source||item.source):item.source);if(!isVideo)node.alt=title;
-  if(isVideo){node.controls=!isCircle;node.playsInline=true;node.preload='metadata';if(item.poster)node.poster=url(item.poster);}
+  if(isVideo){node.controls=!isCircle;node.playsInline=true;node.preload='metadata';if(item.poster)node.poster=url(item.face_poster||item.poster);node.addEventListener('waiting',()=>{$('#viewer-error').textContent='Видео загружается…';});node.addEventListener('playing',()=>{$('#viewer-error').textContent='';});}
   node.addEventListener('error',()=>{$('#viewer-error').textContent='Не получилось открыть файл в браузере. ';const a=document.createElement('a');a.href=url(item.source);a.textContent=isVideo?'Открыть видео отдельно':'Открыть фото отдельно';a.target='_blank';a.rel='noopener';$('#viewer-error').append(a);});
   if(isCircle){
    const stage=document.createElement('div');stage.className='circle-stage';stage.append(node);body.append(stage);
@@ -92,14 +98,15 @@
  let desiredPreviews=new Set();
  function syncPreviews(){
   const limit=matchMedia('(max-width: 600px)').matches?2:3;
-  const eligible=!reduced.matches&&!navigator.connection?.saveData&&!viewer.open&&!document.hidden;
+  const eligible=!reduced.matches&&!navigator.connection?.saveData&&!['slow-2g','2g'].includes(navigator.connection?.effectiveType)&&!viewer.open&&!document.hidden;
   const selected=eligible?previews.filter(v=>visiblePreviews.has(v)).slice(0,limit):[];
   desiredPreviews=new Set(selected);
-  previews.filter(v=>!selected.includes(v)).forEach(v=>{v.pause();v.classList.remove('is-playing');});
+  previews.filter(v=>!selected.includes(v)).forEach(v=>{v.pause();v.classList.remove('is-playing');if(v.hasAttribute('src')){v.removeAttribute('src');v.load();}});
   selected.forEach(async v=>{
    if(!v.paused)return;
    const p=D.people[Number(v.dataset.preview)];
-   if(!v.getAttribute('src'))v.src=url(p.web_source||p.source);
+   if(!p.preview_source)return;
+   if(!v.getAttribute('src'))v.src=url(p.preview_source);
    v.muted=true;v.playsInline=true;
    try{await v.play();if(!desiredPreviews.has(v)||viewer.open||document.hidden||reduced.matches){v.pause();return;}if(!v.paused)v.classList.add('is-playing');}catch{v.classList.remove('is-playing');}
   });

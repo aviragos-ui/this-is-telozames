@@ -122,22 +122,51 @@
       "title": "Места, где это случилось",
       "type": "film",
       "place_names_source": "verified_archive_captions",
-      "presentation": "single_film_with_place_captions",
+      "presentation": "memory_albums_and_film",
       "photo_geography": "verified_chat_captions_only",
-      "featured_collection": [
-        "archive-121",
-        "archive-122",
-        "archive-123",
-        "archive-096",
-        "archive-097",
-        "archive-098",
-        "archive-099",
-        "archive-100",
-        "archive-101",
-        "archive-102",
-        "archive-103",
-        "archive-104"
-      ]
+      "collections": {
+        "studio": [
+          "archive-133",
+          "archive-134",
+          "archive-135",
+          "archive-136",
+          "archive-117",
+          "archive-118"
+        ],
+        "analogue": [
+          "archive-124",
+          "archive-125",
+          "archive-126",
+          "archive-114",
+          "archive-115",
+          "archive-108"
+        ],
+        "retreat": [
+          "archive-131",
+          "archive-132",
+          "archive-119",
+          "archive-120",
+          "archive-107"
+        ],
+        "goa2023": [
+          "archive-127",
+          "archive-128",
+          "archive-129",
+          "archive-130",
+          "archive-112",
+          "archive-113"
+        ],
+        "goa": [
+          "archive-121",
+          "archive-122",
+          "archive-123",
+          "archive-096",
+          "archive-099",
+          "archive-102",
+          "archive-103",
+          "archive-104"
+        ]
+      }
     },
     {
       "id": "final",
